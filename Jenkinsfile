@@ -36,11 +36,7 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                sh '''
-                cd terraform-scripts
-                terraform init
-                terraform apply -auto-approve
-                '''
+                sh 'cd terraform && terraform init && terraform apply -auto-approve'
             }
         }
 
