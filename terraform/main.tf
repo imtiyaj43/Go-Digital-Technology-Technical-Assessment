@@ -9,5 +9,5 @@ resource "aws_s3_bucket" "data_bucket" {
 }
 
 output "s3_bucket_name" {
-  value = aws_s3_bucket.your_bucket.id
+  value = aws_s3_bucket.data_bucket.id
 }
