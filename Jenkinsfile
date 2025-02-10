@@ -44,30 +44,6 @@ pipeline {
                 }
             }
         }
-        stage('Update Lambda Function') { // Deploy Lambda with new Docker Image
-            steps {
-                withCredentials([aws(credentialsId: 'aws-credentials')]) {
-                    sh '''
-                    aws lambda update-function-code \
-                        --function-name $LAMBDA_FUNCTION_NAME \
-                        --image-uri $AWS_ECR_URL/$REPO_NAME:latest \
-                        --region $AWS_REGION
-                    '''
-                }
-            }
-        }
-        stage('Test Lambda Function') { // Invoke Lambda function to verify deployment
-            steps {
-                withCredentials([aws(credentialsId: 'aws-credentials')]) {
-                    sh '''
-                    aws lambda invoke \
-                        --function-name $LAMBDA_FUNCTION_NAME \
-                        --region $AWS_REGION \
-                        --payload '{}' response.json
-                    cat response.json
-                    '''
-                }
-            }
-        }
+        
     }
 }
