@@ -15,5 +15,18 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/imtiyaj43/Go-Digital-Technology-Technical-Assessment.git'
             }
         }
+        stage('Terraform Apply') {  // First, create the infrastructure
+            steps {
+                script {
+                    sh '''
+                    export PATH=$PATH:/usr/local/bin
+                    cd terraform
+                    terraform init
+                    terraform apply -auto-approve
+                    '''
+                }
+            }
+        }
+
     }
 }
