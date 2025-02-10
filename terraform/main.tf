@@ -8,18 +8,6 @@ resource "aws_s3_bucket" "data_bucket" {
   }
 }
 
-resource "aws_ecr_repository" "docker_repo" {
-  name = "go-digital-repo"
-
-  image_scanning_configuration {
-    scan_on_push = true # Automatically scan for vulnerabilities
-  }
-
-  tags = {
-    Name        = "Go Digital ECR Repository"
-    Environment = "Dev"
-  }
-}
 
 resource "aws_lambda_function" "my_lambda" {
   function_name    = "myLambdaFunction"
