@@ -16,19 +16,26 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Terraform Apply') {  // First, create the infrastructure
+            steps {
+                script {
+                    sh '''
+                    export PATH=$PATH:/usr/local/bin
+                    cd terraform
+                    terraform init
+                    terraform apply -auto-approve
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Image') { // Now, build the Docker image
             steps {
                 sh 'docker build -t $IMAGE_NAME -f src/Dockerfile src/'
             }
         }
 
-        stage('Terraform Apply') {
-            steps {
-                sh 'cd terraform && terraform init && terraform apply -auto-approve'
-            }
-        }
-        
-        stage('Push to ECR') {
+        stage('Push to ECR') { // Push the image to ECR
             steps {
                 withCredentials([aws(credentialsId: 'aws-credentials')]) {
                     sh '''
@@ -38,14 +45,12 @@ pipeline {
                     '''
                 }
             }
-        } 
+        }
 
-        
-
-        stage('Deploy Lambda') {
+        stage('Deploy Lambda') { // Deploy the Lambda function
             steps {
                 sh '''
-                aws lambda update-function-code --function-name myLambdaFunction --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME:latest
+                aws lambda update-function-code --function-name myLambdaFunction --image-uri $AWS_ECR_URL/$REPO_NAME:latest
                 '''
             }
         }
