@@ -2,10 +2,8 @@ import boto3
 import pymysql
 import json
 
-session = boto3.Session(region_name="ap-south-1")  # Explicitly set region
-
-# AWS clients
-s3 = boto3.client('s3')
+# Initialize AWS clients
+s3 = boto3.client('s3', region_name="ap-south-1")
 glue = boto3.client('glue')
 
 # RDS Credentials
@@ -14,7 +12,22 @@ RDS_USER = "admin"
 RDS_PASSWORD = "Shaikh14"
 RDS_DB = "godigitaldb"
 
-def read_from_s3(bucket_name, file_key):
+bucket_name = "my-data-bucket-ympp6p"
+file_key = "data.json"
+
+# Sample Data to Upload
+sample_data = {"name": "Test User", "age": 25}
+
+def upload_to_s3():
+    """Uploads sample JSON data if not found"""
+    try:
+        s3.head_object(Bucket=bucket_name, Key=file_key)
+        print("File already exists in S3. Skipping upload.")
+    except:
+        print("File not found. Uploading sample data...")
+        s3.put_object(Bucket=bucket_name, Key=file_key, Body=json.dumps(sample_data))
+
+def read_from_s3():
     """Read JSON data from S3"""
     response = s3.get_object(Bucket=bucket_name, Key=file_key)
     content = response['Body'].read().decode('utf-8')
@@ -32,10 +45,11 @@ def write_to_rds(data):
         conn.commit()
         cursor.close()
         conn.close()
-        return "Data successfully written to RDS"
+        print("Data successfully written to RDS")
+        return True
     except Exception as e:
         print(f"RDS write failed: {e}")
-        return None
+        return False
 
 def write_to_glue(data):
     """Write data to AWS Glue (dummy function for now)"""
@@ -44,13 +58,10 @@ def write_to_glue(data):
 
 def main():
     """Main execution"""
-    bucket_name = "go-digital-data-bucket"
-    file_key = "data.json"
+    upload_to_s3()  # Upload sample data first
+    data = read_from_s3()  # Read from S3
 
-    data = read_from_s3(bucket_name, file_key)
-
-    # Try to write to RDS first
-    if write_to_rds(data) is None:
+    if not write_to_rds(data):  # If RDS fails, use Glue
         write_to_glue(data)
 
 if __name__ == "__main__":
