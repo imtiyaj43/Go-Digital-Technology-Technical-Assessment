@@ -4,7 +4,14 @@ FROM python:3.12
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the application files into the container
+# Copy requirements first (better caching)
+COPY requirements.txt requirements.txt
+
+# Install dependencies before copying code
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application files
 COPY . .
 
 # Install system dependencies required for dbus-python and other packages
@@ -20,12 +27,5 @@ RUN apt-get update && apt-get install -y \
     libsystemd-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip before installing dependencies
-RUN pip install --upgrade pip
-
-# Install required Python libraries
-RUN pip install --no-cache-dir -r requirements.txt
-
 # Command to run the script when the container starts
 CMD ["python", "app.py"]
-
