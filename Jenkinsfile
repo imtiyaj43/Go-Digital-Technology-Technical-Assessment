@@ -22,6 +22,12 @@ pipeline {
             }
         }
 
+        stage('Terraform Apply') {
+            steps {
+                sh 'cd terraform && terraform init && terraform apply -auto-approve'
+            }
+        }
+        
         stage('Push to ECR') {
             steps {
                 withCredentials([aws(credentialsId: 'aws-credentials')]) {
@@ -34,11 +40,7 @@ pipeline {
             }
         } 
 
-        stage('Terraform Apply') {
-            steps {
-                sh 'cd terraform && terraform init && terraform apply -auto-approve'
-            }
-        }
+        
 
         stage('Deploy Lambda') {
             steps {
