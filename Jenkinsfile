@@ -7,6 +7,7 @@ pipeline {
         AWS_ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         REPO_NAME = 'go-digital-repo'
         IMAGE_NAME = 'my-python-app'
+        LAMBDA_FUNCTION_NAME = 's3-to-rds-lambda'
     }
 
     stages {
@@ -39,6 +40,31 @@ pipeline {
                     aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_URL
                     docker tag $IMAGE_NAME:latest $AWS_ECR_URL/$REPO_NAME:latest
                     docker push $AWS_ECR_URL/$REPO_NAME:latest
+                    '''
+                }
+            }
+        }
+        stage('Update Lambda Function') { // Deploy Lambda with new Docker Image
+            steps {
+                withCredentials([aws(credentialsId: 'aws-credentials')]) {
+                    sh '''
+                    aws lambda update-function-code \
+                        --function-name $LAMBDA_FUNCTION_NAME \
+                        --image-uri $AWS_ECR_URL/$REPO_NAME:latest \
+                        --region $AWS_REGION
+                    '''
+                }
+            }
+        }
+        stage('Test Lambda Function') { // Invoke Lambda function to verify deployment
+            steps {
+                withCredentials([aws(credentialsId: 'aws-credentials')]) {
+                    sh '''
+                    aws lambda invoke \
+                        --function-name $LAMBDA_FUNCTION_NAME \
+                        --region $AWS_REGION \
+                        --payload '{}' response.json
+                    cat response.json
                     '''
                 }
             }
