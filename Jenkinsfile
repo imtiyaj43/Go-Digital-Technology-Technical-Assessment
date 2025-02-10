@@ -34,25 +34,5 @@ pipeline {
                 sh 'docker build -t $IMAGE_NAME -f src/Dockerfile src/'
             }
         }
-
-        stage('Push to ECR') { // Push the image to ECR
-            steps {
-                withCredentials([aws(credentialsId: 'aws-credentials')]) {
-                    sh '''
-                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_URL
-                    docker tag $IMAGE_NAME:latest $AWS_ECR_URL/$REPO_NAME:latest
-                    docker push $AWS_ECR_URL/$REPO_NAME:latest
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy Lambda') { // Deploy the Lambda function
-            steps {
-                sh '''
-                aws lambda update-function-code --function-name myLambdaFunction --image-uri $AWS_ECR_URL/$REPO_NAME:latest
-                '''
-            }
-        }
     }
 }
