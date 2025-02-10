@@ -22,7 +22,7 @@ pipeline {
                     export PATH=$PATH:/usr/local/bin
                     cd terraform
                     terraform init
-                    terraform apply -auto-approve
+                    terraform destroy -auto-approve
                     '''
                 }
             }
