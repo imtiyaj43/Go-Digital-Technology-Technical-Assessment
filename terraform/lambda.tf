@@ -1,5 +1,6 @@
+# IAM Role for Lambda
 resource "aws_iam_role" "lambda_role" {
-  name = "lambda_execution_role1"
+  name = "lambda_execution_role"
 
   assume_role_policy = <<EOF
 {
@@ -18,50 +19,32 @@ resource "aws_iam_role" "lambda_role" {
 EOF
 }
 
-# Attach IAM Policies for Lambda to Access S3, RDS, and ECR
-resource "aws_iam_policy" "lambda_permissions" {
-  name        = "lambda_permissions"
-  description = "Permissions for Lambda to access S3, RDS, and ECR"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:ListBucket"],
-      "Resource": [
-        "arn:aws:s3:::${aws_s3_bucket.data_bucket.id}",
-        "arn:aws:s3:::${aws_s3_bucket.data_bucket.id}/*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["rds:*"],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["ecr:GetDownloadUrlForLayer", "ecr:BatchGetImage", "ecr:GetAuthorizationToken"],
-      "Resource": "*"
-    }
-  ]
-}
-EOF
+# ✅ Instead of creating a new IAM policy, reference the existing one
+data "aws_iam_policy" "lambda_permissions" {
+  name = "lambda_permissions"
 }
 
+# ✅ Attach the existing IAM policy
 resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
   role       = aws_iam_role.lambda_role.name
-  policy_arn = aws_iam_policy.lambda_permissions.arn
+  policy_arn = data.aws_iam_policy.lambda_permissions.arn
 }
 
-# Lambda Function using ECR Image
+# ✅ Ensure ECR repo exists before deploying Lambda
+resource "aws_ecr_repository" "go_digital_repo" {
+  name = "go-digital-repo"
+}
+
+# ✅ Lambda Function using ECR Image (only after image exists)
 resource "aws_lambda_function" "s3_to_rds_lambda" {
   function_name = "s3-to-rds-lambda"
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
-  image_uri     = "${aws_ecr_repository.go_digital_repo.repository_url}:latest"
-  timeout       = 60
+
+  # ✅ Ensure image exists before deploying Lambda
+  image_uri = "${aws_ecr_repository.go_digital_repo.repository_url}:latest"
+
+  timeout = 60
 
   environment {
     variables = {
@@ -72,6 +55,8 @@ resource "aws_lambda_function" "s3_to_rds_lambda" {
       BUCKET_NAME  = aws_s3_bucket.data_bucket.id
     }
   }
+
+  depends_on = [aws_ecr_repository.go_digital_repo]
 }
 
 output "lambda_function_arn" {
