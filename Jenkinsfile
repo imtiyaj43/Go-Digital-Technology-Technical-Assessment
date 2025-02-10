@@ -4,6 +4,7 @@ pipeline {
     environment {
         AWS_REGION = 'ap-south-1'
         AWS_ACCOUNT_ID = '971422687529'
+        AWS_ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         REPO_NAME = 'go-digital-repo'
         IMAGE_NAME = 'my-python-app'
     }
@@ -29,9 +30,12 @@ pipeline {
                 ]]) {
                     sh '''
                     aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_URL
+                    docker tag $IMAGE_NAME:latest $AWS_ECR_URL/$REPO_NAME:latest
+                    docker push $AWS_ECR_URL/$REPO_NAME:latest
                     '''
+                }
             }
-        }
+        } 
 
         stage('Terraform Apply') {
             steps {
