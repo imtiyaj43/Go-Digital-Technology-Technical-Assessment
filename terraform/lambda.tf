@@ -19,30 +19,30 @@ resource "aws_iam_role" "lambda_role" {
 EOF
 }
 
-# ✅ Instead of creating a new IAM policy, reference the existing one
+# Check if IAM Policy exists
 data "aws_iam_policy" "lambda_permissions" {
   name = "lambda_permissions"
 }
 
-# ✅ Attach the existing IAM policy
+# Attach the existing IAM policy to Lambda Role
 resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = data.aws_iam_policy.lambda_permissions.arn
 }
 
-# ✅ Ensure ECR repo exists before deploying Lambda
-resource "aws_ecr_repository" "go_digital_repo" {
+# Check if ECR repository already exists
+data "aws_ecr_repository" "go_digital_repo" {
   name = "go-digital-repo"
 }
 
-# ✅ Lambda Function using ECR Image (only after image exists)
+# Lambda Function using ECR Image
 resource "aws_lambda_function" "s3_to_rds_lambda" {
   function_name = "s3-to-rds-lambda"
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
 
-  # ✅ Ensure image exists before deploying Lambda
-  image_uri = "${aws_ecr_repository.go_digital_repo.repository_url}:latest"
+  # Use the existing ECR repository
+  image_uri = "${data.aws_ecr_repository.go_digital_repo.repository_url}:latest"
 
   timeout = 60
 
@@ -56,10 +56,9 @@ resource "aws_lambda_function" "s3_to_rds_lambda" {
     }
   }
 
-  depends_on = [aws_ecr_repository.go_digital_repo]
+  depends_on = [aws_iam_role.lambda_role, aws_iam_role_policy_attachment.lambda_policy_attach]
 }
 
 output "lambda_function_arn" {
   value = aws_lambda_function.s3_to_rds_lambda.arn
 }
-
