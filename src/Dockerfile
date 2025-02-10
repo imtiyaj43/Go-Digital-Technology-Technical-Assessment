@@ -1,17 +1,10 @@
 # Use the official Python image as the base image
-FROM python:3.12
+FROM python:3.10
 
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy requirements first (better caching)
-COPY requirements.txt requirements.txt
-
-# Install dependencies before copying code
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application files
+# Copy the application files into the container
 COPY . .
 
 # Install system dependencies required for dbus-python and other packages
@@ -25,7 +18,15 @@ RUN apt-get update && apt-get install -y \
     gobject-introspection \
     libgirepository1.0-dev \
     libsystemd-dev \
+    libdbus-glib-1-dev \
+    dbus \
     && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip before installing dependencies
+RUN pip install --upgrade pip
+
+# Install required Python libraries
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Command to run the script when the container starts
 CMD ["python", "app.py"]
