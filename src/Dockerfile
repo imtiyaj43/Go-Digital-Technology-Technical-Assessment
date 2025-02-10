@@ -4,11 +4,11 @@ FROM python:3.10
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the application files into the container
+# Copy application files into the container
 COPY . .
 
 # Install system dependencies required for dbus-python and other packages
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libdbus-1-dev \
     libssl-dev \
@@ -23,10 +23,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip before installing dependencies
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Install required Python libraries
-RUN pip install --no-cache-dir -r requirements.txt
+# Set an environment variable for the S3 bucket (override during runtime if needed)
+ENV BUCKET_NAME="default-bucket-name"
+
+# Create a non-root user and switch to it for security
+RUN useradd -m appuser
+USER appuser
 
 # Command to run the script when the container starts
 CMD ["python", "app.py"]
