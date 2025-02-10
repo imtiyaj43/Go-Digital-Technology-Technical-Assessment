@@ -1,6 +1,7 @@
 import boto3
 import pymysql
 import json
+import os
 
 # Initialize AWS clients
 s3 = boto3.client('s3', region_name="ap-south-1")
@@ -12,7 +13,8 @@ RDS_USER = "admin"
 RDS_PASSWORD = "Shaikh14"
 RDS_DB = "godigitaldb"
 
-bucket_name = "go-digital-data-bucket"
+# Fetch bucket name from environment variable
+bucket_name = os.getenv("BUCKET_NAME", "default-bucket-name")
 file_key = "data.json"
 
 # Sample Data to Upload
