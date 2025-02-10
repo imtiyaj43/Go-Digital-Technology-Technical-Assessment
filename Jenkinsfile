@@ -28,11 +28,5 @@ pipeline {
                 }
             }
         }
-
-        stage('Build Docker Image') { // Now, build the Docker image
-            steps {
-                sh 'docker build -t $IMAGE_NAME -f src/Dockerfile src/'
-            }
-        }
     }
 }
